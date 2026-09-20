@@ -24,11 +24,15 @@ A modern web application built for ENABL to manage wind & solar sites, monitor s
 ### 1. Backend Setup
 
 cd backend
+
 npm install
+
 npm start
 
 ### 2. Frontend Setup:
 
 cd frontend
+
 npm install
+
 npm run dev
