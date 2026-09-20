@@ -27,22 +27,32 @@ To run this project locally on your machine, follow these steps:
 
 ### 1. Clone the Repository
 \`\`\`bash
+
 git clone https://github.com/Shabavudeen/enabl-site-operations-dashboard.git
 cd enabl-site-operations-dashboard
+
 \`\`\`
 
 ### 2. Backend Setup & Run
 Navigate to the backend directory, install dependencies, and start the server:
+
 \`\`\`bash
+
 cd backend
+
 npm install
+
 npm start
 \`\`\`
 
 ### 3. Frontend Setup & Run
 Open a new terminal tab, navigate to the frontend directory, install dependencies, and run the development server:
+
 \`\`\`bash
+
 cd frontend
+
 npm install
+
 npm run dev
 \`\`\`
