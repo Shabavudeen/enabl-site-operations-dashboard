@@ -13,6 +13,42 @@ app.use((req, res, next) => {
   next();
 });
 
+// FUNCTION TO CREATE TABLES AUTOMATICALLY ON STARTUP
+async function initDB() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS sites (
+        id SERIAL PRIMARY KEY,
+        site_name VARCHAR(255) NOT NULL,
+        location VARCHAR(255) NOT NULL,
+        status VARCHAR(50) DEFAULT 'Pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        role VARCHAR(50) DEFAULT 'Technician',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS installations (
+        id SERIAL PRIMARY KEY,
+        site_id INT REFERENCES sites(id) ON DELETE CASCADE,
+        assigned_user_id INT REFERENCES users(id) ON DELETE SET NULL,
+        equipment_name VARCHAR(255) NOT NULL,
+        status VARCHAR(50) DEFAULT 'Scheduled',
+        installation_date DATE NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log("Database tables created or verified successfully!");
+  } catch (err) {
+    console.error("Error creating tables:", err);
+  }
+}
+
 // 1. GET ALL SITES
 app.get('/api/sites', async (req, res) => {
   try {
@@ -113,8 +149,10 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
-// START SERVER
+// START SERVER AFTER INITIALIZING DB TABLES
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+initDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
 });
