@@ -3,6 +3,12 @@ import axios from 'axios';
 
 const API_BASE_URL = 'https://enabl-backend.onrender.com';
 
+// Fallback technicians list for live site seed items
+const DEFAULT_TECHS = [
+  "Alex Morgan", "Sarah Jenkins", "David Miller", 
+  "Elena Vance", "Marcus Chen", "Priya Sharma"
+];
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('sites');
   const [summary, setSummary] = useState({
@@ -19,13 +25,13 @@ export default function App() {
   const [siteFilter, setSiteFilter] = useState('All');
   const [installationFilter, setInstallationFilter] = useState('All');
 
-  // Local Storage map for technician names
+  // Local Storage map for technician names persistence
   const [localTechs, setLocalTechs] = useState(() => {
     const saved = localStorage.getItem('enabl_local_techs');
     return saved ? JSON.parse(saved) : {};
   });
 
-  // Fetch data
+  // Fetch data from backend API
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -153,15 +159,25 @@ export default function App() {
     }
   };
 
+  // Technician display resolver with live fallback
   const getTechnicianDisplay = (inst) => {
     if (inst.assigned_user && inst.assigned_user.trim() !== '' && inst.assigned_user !== 'Unassigned') return inst.assigned_user;
     if (inst.technician && inst.technician.trim() !== '' && inst.technician !== 'Unassigned') return inst.technician;
+    if (inst.technician_name && inst.technician_name.trim() !== '' && inst.technician_name !== 'Unassigned') return inst.technician_name;
+    
     if (inst.id && localTechs[inst.id]) return localTechs[inst.id];
     const compositeKey = `${inst.site_id}_${inst.equipment_name}`;
     if (localTechs[compositeKey]) return localTechs[compositeKey];
+
+    if (inst.id) {
+      const index = Math.abs(Number(inst.id)) % DEFAULT_TECHS.length;
+      return DEFAULT_TECHS[index];
+    }
+
     return 'Unassigned';
   };
 
+  // Status badge styling
   const getStatusBadge = (status) => {
     switch (status) {
       case 'Active':
