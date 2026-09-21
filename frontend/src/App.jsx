@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Building2, Wrench, CheckCircle2, Clock, Plus, Search, RefreshCw } from 'lucide-react';
 import './App.css';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+// Render-ல் நாம் deploy செய்த Live Backend URL
+const API_BASE_URL = 'https://enabl-backend.onrender.com';
 
 function App() {
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [summary, setSummary] = useState({
     total_sites: 0,
     active_sites: 0,
@@ -16,68 +16,84 @@ function App() {
   const [installations, setInstallations] = useState([]);
   const [users, setUsers] = useState([]);
 
-  const [activeTab, setActiveTab] = useState('sites');
+  // Search & Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
 
-  const [newSite, setNewSite] = useState({ site_name: '', location: '', status: 'Pending' });
-  const [newInstallation, setNewInstallation] = useState({
-    site_id: '',
-    assigned_user_id: '',
-    equipment_name: '',
-    status: 'Scheduled',
-    installation_date: '',
-  });
+  // New Site Form states
+  const [newSite, setNewSite] = useState({ site_name: '', location: '', status: 'Active' });
+  const [successMessage, setSuccessMessage] = useState('');
 
+  // Fetch Summary, Sites, Installations & Users on Load
   useEffect(() => {
-    fetchAllData();
+    fetchSummary();
+    fetchSites();
+    fetchInstallations();
+    fetchUsers();
   }, []);
 
-  const fetchAllData = async () => {
+  const fetchSummary = async () => {
     try {
-      const [summaryRes, sitesRes, installationsRes, usersRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/summary`),
-        axios.get(`${API_BASE_URL}/sites`),
-        axios.get(`${API_BASE_URL}/installations`),
-        axios.get(`${API_BASE_URL}/users`),
-      ]);
-      setSummary(summaryRes.data);
-      setSites(sitesRes.data);
-      setInstallations(installationsRes.data);
-      setUsers(usersRes.data);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      const res = await fetch(`${API_BASE_URL}/api/summary`);
+      const data = await res.json();
+      setSummary(data);
+    } catch (err) {
+      console.error('Error fetching summary:', err);
     }
   };
 
+  const fetchSites = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/sites`);
+      const data = await res.json();
+      setSites(data);
+    } catch (err) {
+      console.error('Error fetching sites:', err);
+    }
+  };
+
+  const fetchInstallations = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/installations`);
+      const data = await res.json();
+      setInstallations(data);
+    } catch (err) {
+      console.error('Error fetching installations:', err);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/users`);
+      const data = await res.json();
+      setUsers(data);
+    } catch (err) {
+      console.error('Error fetching users:', err);
+    }
+  };
+
+  // Handle Add New Site
   const handleAddSite = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_BASE_URL}/sites`, newSite);
-      setNewSite({ site_name: '', location: '', status: 'Pending' });
-      fetchAllData();
-    } catch (error) {
-      console.error('Error adding site:', error);
-    }
-  };
-
-  const handleAddInstallation = async (e) => {
-    e.preventDefault();
-    try {
-      await axios.post(`${API_BASE_URL}/installations`, newInstallation);
-      setNewInstallation({
-        site_id: '',
-        assigned_user_id: '',
-        equipment_name: '',
-        status: 'Scheduled',
-        installation_date: '',
+      const res = await fetch(`${API_BASE_URL}/api/sites`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newSite),
       });
-      fetchAllData();
-    } catch (error) {
-      console.error('Error adding installation:', error);
+      if (res.ok) {
+        setSuccessMessage('Site added successfully!');
+        setNewSite({ site_name: '', location: '', status: 'Active' });
+        fetchSites();
+        fetchSummary();
+        setTimeout(() => setSuccessMessage(''), 3000);
+      }
+    } catch (err) {
+      console.error('Error adding site:', err);
     }
   };
 
+  // Filtered Sites
   const filteredSites = sites.filter((site) => {
     const matchesSearch =
       site.site_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -86,282 +102,192 @@ function App() {
     return matchesSearch && matchesStatus;
   });
 
-  const filteredInstallations = installations.filter((inst) => {
-    const matchesSearch =
-      inst.equipment_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (inst.site_name && inst.site_name.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesStatus = statusFilter === 'All' || inst.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
   return (
     <div className="dashboard-container">
-      <header className="dashboard-header">
-        <div>
+      {/* Sidebar Navigation */}
+      <aside className="sidebar">
+        <h2>ENABL Operations</h2>
+        <ul>
+          <li
+            className={activeTab === 'dashboard' ? 'active' : ''}
+            onClick={() => setActiveTab('dashboard')}
+          >
+            📊 Dashboard Metrics
+          </li>
+          <li
+            className={activeTab === 'sites' ? 'active' : ''}
+            onClick={() => setActiveTab('sites')}
+          >
+            ⚡ Sites Management
+          </li>
+          <li
+            className={activeTab === 'installations' ? 'active' : ''}
+            onClick={() => setActiveTab('installations')}
+          >
+            🛠️ Installations Tracking
+          </li>
+        </ul>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="main-content">
+        <header className="top-bar">
           <h1>Site Operations Dashboard</h1>
-          <p>ENABL A/S Technical Evaluation Project</p>
-        </div>
-        <button className="btn-refresh" onClick={fetchAllData}>
-          <RefreshCw size={16} /> Refresh Data
-        </button>
-      </header>
+          <span className="live-badge">🟢 Connected to Render Live API</span>
+        </header>
 
-      {/* Summary Cards */}
-      <div className="summary-grid">
-        <div className="card summary-card">
-          <div className="card-icon bg-blue"><Building2 size={24} /></div>
-          <div>
-            <h3>Total Sites</h3>
-            <p className="card-value">{summary.total_sites}</p>
+        {/* TAB 1: DASHBOARD METRICS */}
+        {activeTab === 'dashboard' && (
+          <div className="tab-section">
+            <h2>Operational Overview</h2>
+            <div className="metrics-grid">
+              <div className="card">
+                <h3>Total Sites</h3>
+                <p className="metric-value">{summary.total_sites}</p>
+              </div>
+              <div className="card">
+                <h3>Active Sites</h3>
+                <p className="metric-value">{summary.active_sites}</p>
+              </div>
+              <div className="card">
+                <h3>Total Installations</h3>
+                <p className="metric-value">{summary.total_installations}</p>
+              </div>
+              <div className="card">
+                <h3>Completed Tasks</h3>
+                <p className="metric-value">{summary.completed_installations}</p>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="card summary-card">
-          <div className="card-icon bg-green"><CheckCircle2 size={24} /></div>
-          <div>
-            <h3>Active Sites</h3>
-            <p className="card-value">{summary.active_sites}</p>
-          </div>
-        </div>
+        {/* TAB 2: SITES MANAGEMENT */}
+        {activeTab === 'sites' && (
+          <div className="tab-section">
+            <h2>Sites Management</h2>
 
-        <div className="card summary-card">
-          <div className="card-icon bg-purple"><Wrench size={24} /></div>
-          <div>
-            <h3>Total Installations</h3>
-            <p className="card-value">{summary.total_installations}</p>
-          </div>
-        </div>
+            {/* Add New Site Form */}
+            <form onSubmit={handleAddSite} className="site-form">
+              <h3>Add New Site</h3>
+              {successMessage && <p className="success-msg">{successMessage}</p>}
+              <div className="form-group">
+                <input
+                  type="text"
+                  placeholder="Site Name"
+                  value={newSite.site_name}
+                  onChange={(e) => setNewSite({ ...newSite, site_name: e.target.value })}
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Location"
+                  value={newSite.location}
+                  onChange={(e) => setNewSite({ ...newSite, location: e.target.value })}
+                  required
+                />
+                <select
+                  value={newSite.status}
+                  onChange={(e) => setNewSite({ ...newSite, status: e.target.value })}
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                  <option value="Pending">Pending</option>
+                </select>
+                <button type="submit">Add Site</button>
+              </div>
+            </form>
 
-        <div className="card summary-card">
-          <div className="card-icon bg-orange"><Clock size={24} /></div>
-          <div>
-            <h3>Completed Tasks</h3>
-            <p className="card-value">{summary.completed_installations}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Controls Bar */}
-      <div className="controls-bar">
-        <div className="tabs">
-          <button
-            className={`tab-btn ${activeTab === 'sites' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('sites'); setStatusFilter('All'); }}
-          >
-            Sites Management
-          </button>
-          <button
-            className={`tab-btn ${activeTab === 'installations' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('installations'); setStatusFilter('All'); }}
-          >
-            Installation Tracking
-          </button>
-        </div>
-
-        <div className="search-filter-group">
-          <div className="search-input">
-            <Search size={18} />
-            <input
-              type="text"
-              placeholder={`Search ${activeTab}...`}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-
-          <select
-            className="filter-select"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="All">All Statuses</option>
-            {activeTab === 'sites' ? (
-              <>
+            {/* Search & Filters */}
+            <div className="filter-bar">
+              <input
+                type="text"
+                placeholder="Search by name or location..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                <option value="All">All Status</option>
                 <option value="Active">Active</option>
-                <option value="Pending">Pending</option>
                 <option value="Inactive">Inactive</option>
-              </>
-            ) : (
-              <>
-                <option value="Scheduled">Scheduled</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
-                <option value="Failed">Failed</option>
-              </>
-            )}
-          </select>
-        </div>
-      </div>
+                <option value="Pending">Pending</option>
+              </select>
+            </div>
 
-      {/* Main Grid */}
-      <div className="content-grid">
-        <div className="table-section card">
-          {activeTab === 'sites' ? (
-            <>
-              <h2>Sites Listing</h2>
-              <table>
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Site Name</th>
-                    <th>Location</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredSites.map((site) => (
+            {/* Sites Table */}
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Site Name</th>
+                  <th>Location</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredSites.length > 0 ? (
+                  filteredSites.map((site) => (
                     <tr key={site.id}>
-                      <td>#{site.id}</td>
-                      <td><strong>{site.site_name}</strong></td>
+                      <td>{site.id}</td>
+                      <td>{site.site_name}</td>
                       <td>{site.location}</td>
-                      <td><span className={`status-badge status-${site.status.toLowerCase().replace(' ', '-')}`}>{site.status}</span></td>
+                      <td>
+                        <span className={`status-badge ${site.status.toLowerCase()}`}>
+                          {site.status}
+                        </span>
+                      </td>
                     </tr>
-                  ))}
-                  {filteredSites.length === 0 && (
-                    <tr><td colSpan="4" className="empty-text">No sites found.</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </>
-          ) : (
-            <>
-              <h2>Installation Records</h2>
-              <table>
-                <thead>
+                  ))
+                ) : (
                   <tr>
-                    <th>ID</th>
-                    <th>Equipment</th>
-                    <th>Site</th>
-                    <th>Assigned To</th>
-                    <th>Date</th>
-                    <th>Status</th>
+                    <td colSpan="4" style={{ textAlign: 'center' }}>No sites found.</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {filteredInstallations.map((inst) => (
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* TAB 3: INSTALLATIONS TRACKING */}
+        {activeTab === 'installations' && (
+          <div className="tab-section">
+            <h2>Installations Tracking</h2>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Equipment</th>
+                  <th>Site Name</th>
+                  <th>Assigned User</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+            <tbody>
+                {installations.length > 0 ? (
+                  installations.map((inst) => (
                     <tr key={inst.id}>
-                      <td>#{inst.id}</td>
-                      <td><strong>{inst.equipment_name}</strong></td>
+                      <td>{inst.id}</td>
+                      <td>{inst.equipment_name}</td>
                       <td>{inst.site_name || 'N/A'}</td>
                       <td>{inst.assigned_user || 'Unassigned'}</td>
+                      <td>
+                        <span className={`status-badge ${inst.status?.toLowerCase()}`}>
+                          {inst.status}
+                        </span>
+                      </td>
                       <td>{new Date(inst.installation_date).toLocaleDateString()}</td>
-                      <td><span className={`status-badge status-${inst.status.toLowerCase().replace(' ', '-')}`}>{inst.status}</span></td>
                     </tr>
-                  ))}
-                  {filteredInstallations.length === 0 && (
-                    <tr><td colSpan="6" className="empty-text">No installations found.</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </>
-          )}
-        </div>
-
-        <div className="form-section card">
-          {activeTab === 'sites' ? (
-            <>
-              <h2><Plus size={18} /> Add New Site</h2>
-              <form onSubmit={handleAddSite}>
-                <div className="form-group">
-                  <label>Site Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={newSite.site_name}
-                    onChange={(e) => setNewSite({ ...newSite, site_name: e.target.value })}
-                    placeholder="e.g. Solar Park A"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Location</label>
-                  <input
-                    type="text"
-                    required
-                    value={newSite.location}
-                    onChange={(e) => setNewSite({ ...newSite, location: e.target.value })}
-                    placeholder="e.g. Chennai, TN"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Status</label>
-                  <select
-                    value={newSite.status}
-                    onChange={(e) => setNewSite({ ...newSite, status: e.target.value })}
-                  >
-                    <option value="Pending">Pending</option>
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                  </select>
-                </div>
-                <button type="submit" className="btn-primary">Create Site</button>
-              </form>
-            </>
-          ) : (
-            <>
-              <h2><Plus size={18} /> Add Installation</h2>
-              <form onSubmit={handleAddInstallation}>
-                <div className="form-group">
-                  <label>Site</label>
-                  <select
-                    required
-                    value={newInstallation.site_id}
-                    onChange={(e) => setNewInstallation({ ...newInstallation, site_id: e.target.value })}
-                  >
-                    <option value="">Select Site</option>
-                    {sites.map((s) => (
-                      <option key={s.id} value={s.id}>{s.site_name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Assigned User</label>
-                  <select
-                    value={newInstallation.assigned_user_id}
-                    onChange={(e) => setNewInstallation({ ...newInstallation, assigned_user_id: e.target.value })}
-                  >
-                    <option value="">Select User</option>
-                    {users.map((u) => (
-                      <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Equipment Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={newInstallation.equipment_name}
-                    onChange={(e) => setNewInstallation({ ...newInstallation, equipment_name: e.target.value })}
-                    placeholder="e.g. Inverter 50KW"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Installation Date</label>
-                  <input
-                    type="date"
-                    required
-                    value={newInstallation.installation_date}
-                    onChange={(e) => setNewInstallation({ ...newInstallation, installation_date: e.target.value })}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Status</label>
-                  <select
-                    value={newInstallation.status}
-                    onChange={(e) => setNewInstallation({ ...newInstallation, status: e.target.value })}
-                  >
-                    <option value="Scheduled">Scheduled</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Failed">Failed</option>
-                  </select>
-                </div>
-                <button type="submit" className="btn-primary">Record Installation</button>
-              </form>
-            </>
-          )}
-        </div>
-      </div>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: 'center' }}>No installations tracked yet.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
