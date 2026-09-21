@@ -4,7 +4,7 @@ import axios from 'axios';
 const API_BASE_URL = 'https://enabl-backend.onrender.com';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('installations');
+  const [activeTab, setActiveTab] = useState('sites');
   const [summary, setSummary] = useState({
     total_sites: 0,
     active_sites: 0,
@@ -189,7 +189,7 @@ export default function App() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 max-w-7xl mx-auto font-sans text-slate-800">
+    <div className="min-h-screen bg-slate-50 w-full px-8 py-6 font-sans text-slate-800">
       
       {/* HEADER */}
       <div className="flex justify-between items-center mb-6">
@@ -206,8 +206,8 @@ export default function App() {
       </div>
 
       {/* SUMMARY CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex items-center justify-between">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
             <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">TOTAL SITES</p>
             <p className="text-2xl font-bold text-slate-900 mt-1">{summary.total_sites}</p>
@@ -217,7 +217,7 @@ export default function App() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex items-center justify-between">
+        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
             <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">ACTIVE SITES</p>
             <p className="text-2xl font-bold text-slate-900 mt-1">{summary.active_sites}</p>
@@ -227,7 +227,7 @@ export default function App() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex items-center justify-between">
+        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
             <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">TOTAL INSTALLATIONS</p>
             <p className="text-2xl font-bold text-slate-900 mt-1">{summary.total_installations}</p>
@@ -237,7 +237,7 @@ export default function App() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex items-center justify-between">
+        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
             <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">COMPLETED TASKS</p>
             <p className="text-2xl font-bold text-slate-900 mt-1">{summary.completed_installations}</p>
@@ -276,7 +276,7 @@ export default function App() {
       {activeTab === 'sites' ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* SITES LIST */}
-          <div className="lg:col-span-8 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+          <div className="lg:col-span-8 xl:col-span-9 bg-white p-6 rounded-xl border border-slate-200 shadow-xs">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold text-slate-900">Sites Overview</h2>
               <div className="flex items-center gap-2">
@@ -324,7 +324,7 @@ export default function App() {
           </div>
 
           {/* CREATE SITE FORM */}
-          <div className="lg:col-span-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs h-fit">
+          <div className="lg:col-span-4 xl:col-span-3 bg-white p-6 rounded-xl border border-slate-200 shadow-xs h-fit">
             <h2 className="text-base font-bold text-slate-900 mb-4">+ Add New Site</h2>
             <form onSubmit={handleCreateSite} className="space-y-3.5">
               <div>
@@ -374,7 +374,7 @@ export default function App() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* INSTALLATIONS LIST */}
-          <div className="lg:col-span-8 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+          <div className="lg:col-span-8 xl:col-span-9 bg-white p-6 rounded-xl border border-slate-200 shadow-xs">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold text-slate-900">Installation Jobs</h2>
               <div className="flex items-center gap-2">
@@ -423,7 +423,7 @@ export default function App() {
           </div>
 
           {/* CREATE INSTALLATION FORM */}
-          <div className="lg:col-span-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs h-fit">
+          <div className="lg:col-span-4 xl:col-span-3 bg-white p-6 rounded-xl border border-slate-200 shadow-xs h-fit">
             <h2 className="text-base font-bold text-slate-900 mb-4">+ New Installation</h2>
             <form onSubmit={handleCreateInstallation} className="space-y-3.5">
               <div>
